@@ -13,7 +13,7 @@ from keras import backend as K
 from keras import regularizers
 
 #Load dataset
-folder = 'C:\\Users\\BurgerBucks\\Documents\\Proyectos\\varios\\dataset_mnist\\'
+folder = 'C:\\Users\\BurgerBucks\\Documents\\Proyectos\\NeuralNets\\dataset_mnist\\'
 
 x = np.load(folder+'train_images.npy')
 y = np.loadtxt(folder+'train_labels.csv', delimiter=',', skiprows=1)
