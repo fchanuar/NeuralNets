@@ -11,6 +11,7 @@ from keras import optimizers
 from keras import initializers
 from keras import backend as K 
 from keras import regularizers
+from keras.callbacks import ModelCheckpoint,EarlyStopping, ReduceLROnPlateau
 
 # Load dataset
 folder = 'C:\\Users\\BurgerBucks\\Documents\\Proyectos\\NeuralNets\\dataset_mnist\\'
@@ -21,6 +22,14 @@ x_test = np.load(folder+'test_images.npy')
 
 # Split dataset (train/val)
 x_train, x_valid, y_train, y_valid = train_test_split(x, y, test_size = 0.1)
+
+# Normalization
+x_train = x_train.reshape(x_train.shape+(1,))                                    
+x_test = x_test.reshape(x_test.shape+(1,))
+x_valid = x_valid.reshape(x_valid.shape+(1,))
+x_train = x_train.astype('float32')/255
+x_test = x_test.astype('float32')/255
+x_valid= x_valid.astype('float32')/255
 
 # OneHot encode the output
 y_train_categorical = to_categorical(y_train)
@@ -39,12 +48,12 @@ K.clear_session()
 model = Sequential()
 
 # Input Layer
-model.add(Flatten(input_shape=x_train.shape[1:]))
+model.add(Flatten(input_shape=x_train.shape[1:], name='Entrada'))
 
 # Hidden Layers
 nerons_per_layer = [700, 300, 60, 30, 10]
 for i, neurons in enumerate(nerons_per_layer):
-    model.add(Dense(neurons, activation='relu', kernel_initializer='normal', name='Oculta' + str(i)))
+    model.add(Dense(neurons, activation='relu', kernel_initializer='normal', name='Oculta_' + str(i)))
 
 # Output Layer
 model.add(Dense(output_size, kernel_initializer=default_initializer, name='Salida'))
@@ -53,17 +62,28 @@ model.add(Activation('softmax'))
 model.summary()
 
 # Compile the net
-lr = 0.0001
+lr = 0.01
 optim = optimizers.adam(lr=lr)
+earlyStopping=EarlyStopping(monitor='val_loss', 
+                            min_delta=0, 
+                            patience=80, verbose=1, restore_best_weights=True)
+reduceLR=ReduceLROnPlateau(monitor='val_loss', 
+                           factor=0.1, 
+                           patience=5, 
+                           verbose=1, 
+                           min_delta=0, 
+                           cooldown=0, min_lr=0)
 model.compile(loss = 'categorical_crossentropy', optimizer=optim, metrics=['accuracy'])
 
+
 # Fit
-batch_size = 512
+batch_size = 256
 model.fit(x_train, 
           y_train_categorical,
-          epochs=20, batch_size=batch_size, 
+          epochs=100, batch_size=batch_size, 
           verbose=1, 
           validation_data = (x_valid, y_val_categorical),
+          callbacks=[earlyStopping, reduceLR]
           )
 
 # Metrics
